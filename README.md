@@ -8,3 +8,4 @@ Bills to be displayed with _Bill Short Title_, _Date Issued_ and a link to Austr
 
 - Use BS to get links from titles
 - number issues and make call function
+- run with cicd for server

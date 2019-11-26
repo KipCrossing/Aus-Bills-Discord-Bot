@@ -26,8 +26,11 @@ async def on_ready():
     print('Bot ready!')
     await client.wait_until_ready()
     server = client.get_guild(id=SERVER_ID)
+
     lower_channel = client.get_channel(LOWER_BILLS_CHANNEL_ID)
     upper_channel = client.get_channel(UPPER_BILLS_CHANNEL_ID)
+    await remove_completed_lower()
+    await remove_completed_upper()
     await post_new_lower_bill()
     await post_new_upper_bill()
     await asyncio.sleep(20)
@@ -37,6 +40,7 @@ async def on_ready():
 async def clear_channel(channel):
     messages = []
     async for message in channel.history(limit=100):
+        print(message.embeds[0].title)
         messages.append(message)
     await channel.delete_messages(messages)
 
@@ -101,6 +105,36 @@ async def post_new_bill(channel, old_table, new_table):
             Embed.add_field(
                 name="Bill details:", value="[Click here](https://www.aph.gov.au/Parliamentary_Business/Bills_Legislation/Bills_Lists/Details_page?blsId=legislation%2fbillslst%2fbillslst_c203aa1c-1876-41a8-bc76-1de328bdb726)")
             await channel.send(embed=Embed)
+
+
+async def remove_completed_lower():
+    await client.wait_until_ready()
+    server = client.get_guild(id=SERVER_ID)
+    channel = client.get_channel(LOWER_BILLS_CHANNEL_ID)
+    messages = []
+    async for message in channel.history(limit=100):
+        for i in range(len(list(new_table_lower["Short Title"]))):
+            tit = list(new_table_lower["Short Title"])[i]
+            if tit == message.embeds[0].title:
+                if not check_not_passed(new_table_lower, i):
+                    print("Delete:", message.embeds[0].title)
+                    messages.append(message)
+    await channel.delete_messages(messages)
+
+
+async def remove_completed_upper():
+    await client.wait_until_ready()
+    server = client.get_guild(id=SERVER_ID)
+    channel = client.get_channel(UPPER_BILLS_CHANNEL_ID)
+    messages = []
+    async for message in channel.history(limit=100):
+        for i in range(len(list(new_table_upper["Short Title"]))):
+            tit = list(new_table_upper["Short Title"])[i]
+            if tit == message.embeds[0].title:
+                if not check_not_passed(new_table_upper, i):
+                    print("Delete:", message.embeds[0].title)
+                    messages.append(message)
+    await channel.delete_messages(messages)
 
 
 new_table_lower.to_csv("lower.csv")

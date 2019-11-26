@@ -1,5 +1,5 @@
 import pandas as pd
-
+import math
 
 import asyncio
 from discord.ext import commands
@@ -64,12 +64,29 @@ async def post_new_lower_bill():
     await post_new_bill(channel, old_table_lower, new_table_lower)
 
 
+def check_not_passed(table, row):
+    ps = list(table["Passed Senate"])[row]
+    ph = list(table["Passed House"])[row]
+    passed_senate = False
+    passed_house = False
+    if isinstance(ps, float):
+        if math.isnan(ps):
+            passed_senate = True
+    if isinstance(ph, float):
+        if math.isnan(ph):
+            passed_house = True
+    passed = passed_house or passed_senate
+    return(passed)
+
+
 async def post_new_bill(channel, old_table, new_table):
     for i in range(len(list(new_table["Short Title"]))):
         tit = list(new_table["Short Title"])[i]
         date = list(new_table["Intro House"])[i]
-        if tit not in list(old_table["Short Title"]):
+        if tit not in list(old_table["Short Title"]) and check_not_passed(new_table, i):
             print(tit, date)
+            print(check_not_passed(new_table, i))
+
             Embed = discord.Embed(title=tit,
                                   description="Introduced on {}".format(date),
                                   colour=discord.Colour.purple())
@@ -78,8 +95,8 @@ async def post_new_bill(channel, old_table, new_table):
             await channel.send(embed=Embed)
 
 
-new_table_lower.to_csv("lower.csv")
-new_table_upper.to_csv("upper.csv")
+# new_table_lower.to_csv("lower.csv")
+# new_table_upper.to_csv("upper.csv")
 
 
 try:

@@ -42,14 +42,17 @@ async def on_ready():
     print('Bot ready!')
     await data_setup()
     await client.wait_until_ready()
-    server = client.guilds[0]  # gets first in list as there should be only one server
-    await discord_server_setup(server)
-    await post_new_lower_bill()
-    await post_new_upper_bill()
-    await remove_completed_lower()
-    await remove_completed_upper()
-    await asyncio.sleep(5)
-    await data_save()
+    if len(client.guilds):
+        server = client.guilds[0]  # gets first in list as there should be only one server
+        await discord_server_setup(server)
+        await post_new_lower_bill()
+        await post_new_upper_bill()
+        await remove_completed_lower()
+        await remove_completed_upper()
+        await asyncio.sleep(5)
+        await data_save()
+    else:
+        print("No server connected...")
     await client.close()
 
 
@@ -91,12 +94,10 @@ async def discord_server_setup(server):
             lower_channel = channel
             LOWER_BILLS_CHANNEL_ID = channel.id
             lower_channel_exists = True
-            print('Lower true')
         if channel.name == UPPER_CHANNEL_NAME:
             upper_channel = channel
             UPPER_BILLS_CHANNEL_ID = channel.id
             upper_channel_exists = True
-            print('Upper true')
     if not lower_channel_exists:
         lower_channel = await server.create_text_channel(LOWER_CHANNEL_NAME)
         LOWER_BILLS_CHANNEL_ID = lower_channel.id

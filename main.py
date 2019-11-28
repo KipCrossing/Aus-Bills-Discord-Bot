@@ -15,12 +15,15 @@ client = commands.Bot(command_prefix='!')
 
 # vars
 SERVER_ID = 551999201714634752
-LOWER_BILLS_CHANNEL_ID = 648007317715025932
-UPPER_BILLS_CHANNEL_ID = 648840494008369163
+LOWER_BILLS_CHANNEL_ID = None
+UPPER_BILLS_CHANNEL_ID = None
 ibdd_emojis = ['\u2611', '\u274E', '\U0001F48E', '\U0001F4CA']
 BOT_ID = 647996922166247454
 LOWER_HEADER = ',Short Title,Intro House,Passed House,Intro Senate,Passed Senate,Assent Date,Act No.'
 UPPER_HEADER = ',Short Title,Intro Senate,Passed Senate,Intro House,Passed House,Assent Date,Act No.'
+
+LOWER_CHANNEL_NAME = 'lower-house-bills'
+UPPER_CHANNEL_NAME = 'upper-house-bills'
 
 DATA_DIR = 'data'
 LOWER_FILE = "lower.csv"
@@ -37,21 +40,20 @@ old_table_upper = None
 @client.event
 async def on_ready():
     print('Bot ready!')
-    data_setup()
+    await data_setup()
     await client.wait_until_ready()
-    server = client.get_guild(id=SERVER_ID)
-    lower_channel = client.get_channel(LOWER_BILLS_CHANNEL_ID)
-    upper_channel = client.get_channel(UPPER_BILLS_CHANNEL_ID)
-    await remove_completed_lower()
-    await remove_completed_upper()
+    server = client.guilds[0]  # gets first in list as there should be only one server
+    await discord_server_setup(server)
     await post_new_lower_bill()
     await post_new_upper_bill()
-    await asyncio.sleep(20)
+    await remove_completed_lower()
+    await remove_completed_upper()
+    await asyncio.sleep(5)
+    await data_save()
     await client.close()
-    data_save()
 
 
-def data_setup():
+async def data_setup():
     # Setup the discord server with channels etc.
     global new_table_lower
     global old_table_lower
@@ -72,11 +74,35 @@ def data_setup():
     old_table_upper = pd.read_csv(DATA_DIR + '/' + UPPER_FILE)
 
 
-def data_save():
+async def data_save():
     global new_table_lower
     global new_table_upper
     new_table_lower.to_csv(DATA_DIR + '/' + LOWER_FILE)
     new_table_upper.to_csv(DATA_DIR + '/' + UPPER_FILE)
+
+
+async def discord_server_setup(server):
+    global LOWER_BILLS_CHANNEL_ID
+    global UPPER_BILLS_CHANNEL_ID
+    lower_channel_exists = False
+    upper_channel_exists = False
+    for channel in server.channels:
+        if channel.name == LOWER_CHANNEL_NAME:
+            lower_channel = channel
+            LOWER_BILLS_CHANNEL_ID = channel.id
+            lower_channel_exists = True
+            print('Lower true')
+        if channel.name == UPPER_CHANNEL_NAME:
+            upper_channel = channel
+            UPPER_BILLS_CHANNEL_ID = channel.id
+            upper_channel_exists = True
+            print('Upper true')
+    if not lower_channel_exists:
+        lower_channel = await server.create_text_channel(LOWER_CHANNEL_NAME)
+        LOWER_BILLS_CHANNEL_ID = lower_channel.id
+    if not upper_channel_exists:
+        upper_channel = await server.create_text_channel(UPPER_CHANNEL_NAME)
+        UPPER_BILLS_CHANNEL_ID = upper_channel.id
 
 
 async def clear_channel(channel):
@@ -145,6 +171,7 @@ async def remove_completed_lower():
     async for message in channel.history(limit=100):
         for i in range(len(list(new_table_lower["Short Title"]))):
             tit = list(new_table_lower["Short Title"])[i]
+
             if tit == message.embeds[0].title:
                 if not check_not_passed(new_table_lower, i):
                     print("Delete:", message.embeds[0].title)

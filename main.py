@@ -19,14 +19,27 @@ LOWER_BILLS_CHANNEL_ID = 648007317715025932
 UPPER_BILLS_CHANNEL_ID = 648840494008369163
 ibdd_emojis = ['\u2611', '\u274E', '\U0001F48E', '\U0001F4CA']
 BOT_ID = 647996922166247454
+LOWER_HEADER = ',Short Title,Intro House,Passed House,Intro Senate,Passed Senate,Assent Date,Act No.'
+UPPER_HEADER = ',Short Title,Intro Senate,Passed Senate,Intro House,Passed House,Assent Date,Act No.'
+
+DATA_DIR = 'data'
+LOWER_FILE = "lower.csv"
+UPPER_FILE = "upper.csv"
+url = "https://www.aph.gov.au/Parliamentary_Business/Bills_Legislation/Bills_Lists/Details_page?blsId=legislation%2fbillslst%2fbillslst_c203aa1c-1876-41a8-bc76-1de328bdb726"
+
+
+new_table_lower = None
+old_table_lower = None
+new_table_upper = None
+old_table_upper = None
 
 
 @client.event
 async def on_ready():
     print('Bot ready!')
+    data_setup()
     await client.wait_until_ready()
     server = client.get_guild(id=SERVER_ID)
-
     lower_channel = client.get_channel(LOWER_BILLS_CHANNEL_ID)
     upper_channel = client.get_channel(UPPER_BILLS_CHANNEL_ID)
     await remove_completed_lower()
@@ -35,6 +48,35 @@ async def on_ready():
     await post_new_upper_bill()
     await asyncio.sleep(20)
     await client.close()
+    data_save()
+
+
+def data_setup():
+    # Setup the discord server with channels etc.
+    global new_table_lower
+    global old_table_lower
+    global new_table_upper
+    global old_table_upper
+    if LOWER_FILE not in os.listdir(DATA_DIR):
+        f = open(DATA_DIR + '/' + LOWER_FILE, 'w')
+        f.write(LOWER_HEADER)
+        f.close()
+    if UPPER_FILE not in os.listdir(DATA_DIR):
+        f = open(DATA_DIR + '/' + UPPER_FILE, 'w')
+        f.write(UPPER_HEADER)
+        f.close()
+
+    new_table_lower = pd.read_html(url, header=0)[0]
+    old_table_lower = pd.read_csv(DATA_DIR + '/' + LOWER_FILE)
+    new_table_upper = pd.read_html(url, header=0)[1]
+    old_table_upper = pd.read_csv(DATA_DIR + '/' + UPPER_FILE)
+
+
+def data_save():
+    global new_table_lower
+    global new_table_upper
+    new_table_lower.to_csv(DATA_DIR + '/' + LOWER_FILE)
+    new_table_upper.to_csv(DATA_DIR + '/' + UPPER_FILE)
 
 
 async def clear_channel(channel):
@@ -50,18 +92,6 @@ async def on_message(message):
     if message.author.id == BOT_ID and (message.channel.id == LOWER_BILLS_CHANNEL_ID or message.channel.id == UPPER_BILLS_CHANNEL_ID):
         for emoji in ibdd_emojis[:2]:
             await message.add_reaction(emoji)
-
-
-# This URL will work on a local Jupyter Notebook.
-# url="https://en.wikipedia.org/wiki/List_of_Academy_Award-winning_films"
-
-# Here we'll use a local copy instead.
-# Use the local copy instead.
-url = "https://www.aph.gov.au/Parliamentary_Business/Bills_Legislation/Bills_Lists/Details_page?blsId=legislation%2fbillslst%2fbillslst_c203aa1c-1876-41a8-bc76-1de328bdb726"
-new_table_lower = pd.read_html(url, header=0)[0]
-old_table_lower = pd.read_csv("lower.csv")
-new_table_upper = pd.read_html(url, header=0)[1]
-old_table_upper = pd.read_csv("upper.csv")
 
 
 async def post_new_upper_bill():
@@ -135,10 +165,6 @@ async def remove_completed_upper():
                     print("Delete:", message.embeds[0].title)
                     messages.append(message)
     await channel.delete_messages(messages)
-
-
-new_table_lower.to_csv("lower.csv")
-new_table_upper.to_csv("upper.csv")
 
 
 try:

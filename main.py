@@ -125,14 +125,14 @@ async def post_new_upper_bill():
     await client.wait_until_ready()
     server = client.get_guild(id=SERVER_ID)
     channel = client.get_channel(UPPER_BILLS_CHANNEL_ID)
-    await post_new_bill(channel, old_table_upper, new_table_upper)
+    await post_new_bill(channel, old_table_upper, new_table_upper, "Intro Senate")
 
 
 async def post_new_lower_bill():
     await client.wait_until_ready()
     server = client.get_guild(id=SERVER_ID)
     channel = client.get_channel(LOWER_BILLS_CHANNEL_ID)
-    await post_new_bill(channel, old_table_lower, new_table_lower)
+    await post_new_bill(channel, old_table_lower, new_table_lower, "Intro House")
 
 
 def check_not_passed(table, row):
@@ -150,10 +150,10 @@ def check_not_passed(table, row):
     return(passed)
 
 
-async def post_new_bill(channel, old_table, new_table):
+async def post_new_bill(channel, old_table, new_table, date_header):
     for i in range(len(list(new_table["Short Title"]))):
         tit = list(new_table["Short Title"])[i]
-        date = list(new_table["Intro House"])[i]
+        date = list(new_table[date_header])[i]
         if tit not in list(old_table["Short Title"]) and check_not_passed(new_table, i):
             print(tit, date)
             Embed = discord.Embed(title=tit,

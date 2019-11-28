@@ -24,11 +24,11 @@ python3 -m pip install -U pandas
 git clone https://github.com/KipCrossing/Aus-Bills-Discord-Bot
 ```
 
-Run the bot during dev:
+Run the bot during development:
 
 ```
 cd Flux-Discord-Bot
 python3 main.py
 ```
 
-For servers, run `run-cicd.sh` during startup :
+For servers, run `run-cicd.sh` on startup

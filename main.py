@@ -49,7 +49,7 @@ async def on_ready():
         await post_new_upper_bill()
         await remove_completed_lower()
         await remove_completed_upper()
-        await asyncio.sleep(5)
+        await asyncio.sleep(60*4)
         await data_save()
     else:
         print("No server connected...")

@@ -22,6 +22,13 @@ The save the TOKEN as `AUS_BILLS_DISCORD_BOT_TOKEN='your_secrete_token'` with yo
 python3 -m pip install -U discord.py
 python3 -m pip install -U pandas
 git clone https://github.com/KipCrossing/Aus-Bills-Discord-Bot
+```
+
+Run the bot during dev:
+
+```
 cd Flux-Discord-Bot
 python3 main.py
 ```
+
+For servers, run `run-cicd.sh` during startup :

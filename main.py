@@ -78,6 +78,7 @@ async def data_setup():
         new_table_upper = pd.read_html(url, header=0)[1]
     except ImportError as e:
         print('Error: Link may be broken, please check')
+        print(e)
     old_table_lower = pd.read_csv(DATA_DIR + '/' + LOWER_FILE)
     old_table_upper = pd.read_csv(DATA_DIR + '/' + UPPER_FILE)
 

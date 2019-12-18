@@ -1,6 +1,6 @@
 import pandas as pd
 import math
-
+import bills_scraper
 import asyncio
 from discord.ext import commands
 import discord
@@ -74,7 +74,13 @@ async def data_setup():
         f.write(UPPER_HEADER)
         f.close()
     try:
-        new_table_lower = pd.read_html(url, header=0)[0]
+        print("Getting new house data...")
+        new_table_lower = pd.DataFrame(await bills_scraper.get_house_bills())
+        print(new_table_lower.head())
+        print("Getting new senate data...")
+        # new_table_upper = pd.DataFrame(await bills_scraper.get_senate_bills())
+        # print(new_table_upper.head())
+        # new_table_lower = pd.read_html(url, header=0)[0]
         new_table_upper = pd.read_html(url, header=0)[1]
     except ImportError as e:
         print('Error: Link may be broken, please check')
@@ -120,13 +126,6 @@ async def clear_channel(channel):
         print(message.embeds[0].title)
         messages.append(message)
     await channel.delete_messages(messages)
-
-
-# @client.event
-# async def on_message(message):
-#     if message.author.id == BOT_ID and (message.channel.id == LOWER_BILLS_CHANNEL_ID or message.channel.id == UPPER_BILLS_CHANNEL_ID):
-#         for emoji in ibdd_emojis[:2]:
-#             await message.add_reaction(emoji)
 
 
 async def post_new_upper_bill():

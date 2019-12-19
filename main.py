@@ -19,8 +19,8 @@ LOWER_BILLS_CHANNEL_ID = None
 UPPER_BILLS_CHANNEL_ID = None
 ibdd_emojis = ['\u2611', '\u274E', '\U0001F48E', '\U0001F4CA']
 BOT_ID = 647996922166247454
-LOWER_HEADER = ',Short Title,Intro House,Passed House,Intro Senate,Passed Senate,Assent Date,Act No.'
-UPPER_HEADER = ',Short Title,Intro Senate,Passed Senate,Intro House,Passed House,Assent Date,Act No.'
+LOWER_HEADER = ',CHAMBER,Short Title,Intro House,Passed House,Intro Senate,Passed Senate,Assent Date,Summary,URL,Act No.'
+UPPER_HEADER = ',CHAMBER,Short Title,Intro House,Passed House,Intro Senate,Passed Senate,Assent Date,Summary,URL,Act No.'
 
 LOWER_CHANNEL_NAME = 'lower-house-bills'
 UPPER_CHANNEL_NAME = 'upper-house-bills'
@@ -35,6 +35,20 @@ new_table_lower = None
 old_table_lower = None
 new_table_upper = None
 old_table_upper = None
+
+
+try:
+    print("Getting new house data...")
+    new_table_lower = pd.DataFrame(bills_scraper.get_house_bills())
+    # print(new_table_lower.head())
+    print("Getting new senate data...")
+    new_table_upper = pd.DataFrame(bills_scraper.get_senate_bills())
+    # print(new_table_upper.head())
+    # new_table_lower = pd.read_html(url, header=0)[0]
+    # new_table_upper = pd.read_html(url, header=0)[1]
+except ImportError as e:
+    print('Error: Link may be broken, please check')
+    print(e)
 
 
 @client.event
@@ -73,18 +87,6 @@ async def data_setup():
         f = open(DATA_DIR + '/' + UPPER_FILE, 'w')
         f.write(UPPER_HEADER)
         f.close()
-    try:
-        print("Getting new house data...")
-        new_table_lower = pd.DataFrame(await bills_scraper.get_house_bills())
-        print(new_table_lower.head())
-        print("Getting new senate data...")
-        # new_table_upper = pd.DataFrame(await bills_scraper.get_senate_bills())
-        # print(new_table_upper.head())
-        # new_table_lower = pd.read_html(url, header=0)[0]
-        new_table_upper = pd.read_html(url, header=0)[1]
-    except ImportError as e:
-        print('Error: Link may be broken, please check')
-        print(e)
     old_table_lower = pd.read_csv(DATA_DIR + '/' + LOWER_FILE)
     old_table_upper = pd.read_csv(DATA_DIR + '/' + UPPER_FILE)
 
@@ -93,7 +95,7 @@ async def data_save():
     global new_table_lower
     global new_table_upper
     if (type(pd.DataFrame()) == type(new_table_lower)):
-        new_table_upper.to_csv(DATA_DIR + '/' + LOWER_FILE)
+        new_table_lower.to_csv(DATA_DIR + '/' + LOWER_FILE)
     if (type(pd.DataFrame()) == type(new_table_upper)):
         new_table_upper.to_csv(DATA_DIR + '/' + UPPER_FILE)
 
@@ -148,9 +150,14 @@ def check_not_passed(table, row):
     if isinstance(ps, float):
         if math.isnan(ps):
             passed_senate = True
+    elif ps == '' or ps is None:
+        passed_senate = True
+
     if isinstance(ph, float):
         if math.isnan(ph):
             passed_house = True
+    elif ph == '' or ph is None:
+        passed_house = True
     passed = passed_house or passed_senate
     return(passed)
 
@@ -160,13 +167,23 @@ async def post_new_bill(channel, old_table, new_table, date_header):
         for i in range(len(list(new_table["Short Title"]))):
             tit = list(new_table["Short Title"])[i]
             date = list(new_table[date_header])[i]
+            bill_url = list(new_table["URL"])[i]
+            bill_summary = list(new_table["Summary"])[i]
             if tit not in list(old_table["Short Title"]) and check_not_passed(new_table, i):
                 print(tit, date)
                 Embed = discord.Embed(title=tit,
                                       description="Introduced on {}".format(date),
                                       colour=discord.Colour.purple())
+                if len(bill_summary) > 1000:
+                    bill_summary = bill_summary[:1000]
+                    bill_summary += '...'
+                if bill_summary is None or bill_summary == '':
+                    bill_summary = '*No summary available*'
                 Embed.add_field(
-                    name="Bill details:", value="[Click here]({})".format(url))
+                    name="Bill Summary:", value=bill_summary)
+                Embed.add_field(
+                    name="Full bill details:", value="[Click here]({})".format(bill_url))
+
                 message = await channel.send(embed=Embed)
                 for emoji in ibdd_emojis[:2]:
                     await message.add_reaction(emoji)

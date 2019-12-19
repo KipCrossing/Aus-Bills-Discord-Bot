@@ -20,13 +20,17 @@ bills_legislation_url = "https://www.aph.gov.au/Parliamentary_Business/Bills_Leg
 
 
 def get_table_data(tds, col):
-    if tds[col].span:
-        return(tds[col].span.string)
-    else:
+    try:
+        if tds[col].span:
+            return(tds[col].span.string)
+        else:
+            return("")
+    except Exception as e:
+        print(e)
         return("")
 
 
-async def get_house_bills():
+def get_house_bills():
     LOWER_HOUSE_BILLS = []
     try:
         website_url = requests.get(bills_legislation_url).text
@@ -46,12 +50,11 @@ async def get_house_bills():
             act_no = get_table_data(tr.findAll('td'), 6)
             bill_url = requests.get(bill_url_string).text
             bill_soup = BeautifulSoup(bill_url, 'lxml')
-            # print(bill_soup.prettify())
             div = bill_soup.find("div", id='main_0_summaryPanel')
             if div:
                 for span_tag in div.find_all('span'):
                     span_tag.unwrap()
-                summary = div.p.text
+                summary = div.p.text.replace('\n', '').replace('    ', '')
             else:
                 summary = ""
             LOWER_HOUSE_BILLS.append(
@@ -74,7 +77,7 @@ async def get_house_bills():
         return(None)
 
 
-async def get_senate_bills():
+def get_senate_bills():
     UPPER_HOUSE_BILLS = []
     try:
         website_url = requests.get(bills_legislation_url).text
@@ -101,7 +104,7 @@ async def get_senate_bills():
             if div:
                 for span_tag in div.find_all('span'):
                     span_tag.unwrap()
-                summary = div.p.text
+                summary = div.p.text.replace('\n', '').replace('    ', '')
             else:
                 summary = ""
             UPPER_HOUSE_BILLS.append(
@@ -122,3 +125,8 @@ async def get_senate_bills():
         print("Link broken:")
         print(e)
         return(None)
+
+
+# d = get_house_bills()
+# df = pd.DataFrame(d)
+# df.to_csv("lowerbills.csv")

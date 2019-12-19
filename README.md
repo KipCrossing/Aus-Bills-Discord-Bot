@@ -4,9 +4,24 @@ This is a _proof of concept_ for mirroring current bills in federal parliament.
 
 Creation of a bot to scrape the [Australian Federal Parliament](https://www.aph.gov.au/Parliamentary_Business/Bills_Legislation/Bills_Lists/Details_page?blsId=legislation%2fbillslst%2fbillslst_c203aa1c-1876-41a8-bc76-1de328bdb726) website and send to separate Senate and House of Representatives Discord channels as embeds that can be called throughout Discord server.
 
+The bills are scraped using _beautiful soup_ and function to get data from upper(senate) and lower house bills are:
+
+```python
+import bills_scraper
+bills_scraper.get_house_bills()
+bills_scraper.get_senate_bills()
+```
+
+And can easily be turned into pandas dataframes:
+
+```python
+df_lower = pd.DataFrame(bills_scraper.get_house_bills())
+df_upper = pd.DataFrame(bills_scraper.get_senate_bills())
+```
+
 The bot posts a new embed if the there is a new bill in either table. If the Bill has finished, the bot deletes the bill.
 
-Bills to be displayed with _Bill Short Title_, _Date Issued_ and a link to Australian Federal Parliament Bill Summary page ![Bill Example](/images/Aus_Bills_example.png)
+Bills to be displayed with _Bill Short Title_, _Date Issued_ and a link to Australian Federal Parliament Bill Summary page ![Bill Example](/images/Aus_Bills_example2.png)
 
 ## Getting started
 

@@ -19,6 +19,7 @@ The save the TOKEN as `AUS_BILLS_DISCORD_BOT_TOKEN='your_secrete_token'` with yo
 ### Install
 
 ```
+apt-get install python3-bs4
 python3 -m pip install -U discord.py
 python3 -m pip install -U pandas
 git clone https://github.com/KipCrossing/Aus-Bills-Discord-Bot

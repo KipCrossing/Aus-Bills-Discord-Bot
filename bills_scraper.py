@@ -90,38 +90,42 @@ def get_senate_bills():
         trs.pop(0)
 
         for tr in trs:
-            bill_url_string = str(tr.a['href'])
-            title = get_table_data(tr.findAll('td'), 0)
-            intro_house = get_table_data(tr.findAll('td'), 3)
-            passed_house = get_table_data(tr.findAll('td'), 4)
-            intro_senate = get_table_data(tr.findAll('td'), 1)
-            passed_senate = get_table_data(tr.findAll('td'), 2)
-            assent_date = get_table_data(tr.findAll('td'), 5)
-            act_no = get_table_data(tr.findAll('td'), 6)
             try:
-                bill_url = requests.get(bill_url_string).text
-                bill_soup = BeautifulSoup(bill_url, 'lxml')
-                div = bill_soup.find("div", id='main_0_summaryPanel')
+                bill_url_string = str(tr.a['href'])
+                title = get_table_data(tr.findAll('td'), 0)
+                intro_house = get_table_data(tr.findAll('td'), 3)
+                passed_house = get_table_data(tr.findAll('td'), 4)
+                intro_senate = get_table_data(tr.findAll('td'), 1)
+                passed_senate = get_table_data(tr.findAll('td'), 2)
+                assent_date = get_table_data(tr.findAll('td'), 5)
+                act_no = get_table_data(tr.findAll('td'), 6)
+                try:
+                    bill_url = requests.get(bill_url_string).text
+                    bill_soup = BeautifulSoup(bill_url, 'lxml')
+                    div = bill_soup.find("div", id='main_0_summaryPanel')
+                except Exception as e:
+                    div = None
+                if div:
+                    for span_tag in div.find_all('span'):
+                        span_tag.unwrap()
+                    summary = div.p.text.replace('\n', '').replace('    ', '')
+                else:
+                    summary = ""
+                UPPER_HOUSE_BILLS.append(
+                    {
+                        CHAMBER: "Senate",
+                        SHORT_TITLE: title,
+                        INTRO_HOUSE: intro_house,
+                        PASSED_HOUSE: passed_house,
+                        INTRO_SENATE: intro_senate,
+                        PASSED_SENATE: passed_senate,
+                        ASSENT_DATE: assent_date,
+                        SUMMARY: summary,
+                        URL: bill_url_string,
+                        ACT_NO: act_no})
             except Exception as e:
-                div = None
-            if div:
-                for span_tag in div.find_all('span'):
-                    span_tag.unwrap()
-                summary = div.p.text.replace('\n', '').replace('    ', '')
-            else:
-                summary = ""
-            UPPER_HOUSE_BILLS.append(
-                {
-                    CHAMBER: "Senate",
-                    SHORT_TITLE: title,
-                    INTRO_HOUSE: intro_house,
-                    PASSED_HOUSE: passed_house,
-                    INTRO_SENATE: intro_senate,
-                    PASSED_SENATE: passed_senate,
-                    ASSENT_DATE: assent_date,
-                    SUMMARY: summary,
-                    URL: bill_url_string,
-                    ACT_NO: act_no})
+                print("Bad data, dev to check: ")
+                print(e)
 
         return(UPPER_HOUSE_BILLS)
     except Exception as e:

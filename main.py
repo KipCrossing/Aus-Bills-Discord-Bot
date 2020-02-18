@@ -11,7 +11,11 @@ print("AusBills Discord Bot")
 
 TOKEN = os.environ['AUS_BILLS_DISCORD_BOT_TOKEN']
 
+# TOKEN = os.environ['TEST_BOT_TOKEN']
+
+
 client = commands.Bot(command_prefix='!')
+client.remove_command('help')
 
 # vars
 server = None
@@ -62,8 +66,8 @@ async def on_ready():
         await discord_server_setup(server)
         await post_new_lower_bill()
         await post_new_upper_bill()
-        await remove_completed_lower()
-        await remove_completed_upper()
+        # await remove_completed_lower()
+        # await remove_completed_upper()
         await asyncio.sleep(60)
         await data_save()
     elif len(client.guilds) > 1:
